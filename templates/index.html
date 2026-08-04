@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のサボり言い訳ジェネレーター</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>🎲 今日のサボり言い訳ジェネレーター</h1>
+      <p class="subtitle">行きたくないあなたの代わりに、AIならぬ乱数が全力で言い訳を考えます。</p>
+    </header>
+
+    <form class="card form-card" action="{{ url_for('generate') }}" method="post">
+      <div class="field">
+        <label for="situation">何をサボりたい？</label>
+        <select id="situation" name="situation">
+          {% for key, label in situations.items() %}
+          <option value="{{ key }}" {% if result and result['situation'] == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="seriousness">
+          本気度: <span id="seriousness-value">{{ result['seriousness'] if result else 3 }}</span>
+          <small>（1 = ネタに走る / 5 = ガチで信じてほしい）</small>
+        </label>
+        <input type="range" id="seriousness" name="seriousness" min="1" max="5"
+               value="{{ result['seriousness'] if result else 3 }}"
+               oninput="document.getElementById('seriousness-value').textContent = this.value">
+      </div>
+
+      <button type="submit" class="generate-btn">言い訳を生成する</button>
+    </form>
+
+    {% if result %}
+    <section class="card result-card">
+      <h2>💬 生成された言い訳（{{ situation_labels[result['situation']] }}用）</h2>
+      <p class="excuse-text">「{{ result['text'] }}」</p>
+
+      <div class="risk">
+        <div class="risk-label">
+          <span>バレ確率</span>
+          <strong class="{% if result['risk'] < 40 %}risk-low{% elif result['risk'] < 70 %}risk-mid{% else %}risk-high{% endif %}">
+            {{ result['risk'] }}%
+          </strong>
+        </div>
+        <div class="risk-bar">
+          <div class="risk-fill {% if result['risk'] < 40 %}risk-low-bg{% elif result['risk'] < 70 %}risk-mid-bg{% else %}risk-high-bg{% endif %}"
+               style="width: {{ result['risk'] }}%"></div>
+        </div>
+        <p class="risk-comment">{{ risk_comment(result['risk']) }}</p>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if history %}
+    <section class="card history-card">
+      <div class="history-header">
+        <h2>📜 言い訳の履歴</h2>
+        <form action="{{ url_for('clear') }}" method="post">
+          <button type="submit" class="clear-btn">履歴を消す（証拠隠滅）</button>
+        </form>
+      </div>
+      <ul class="history-list">
+        {% for row in history %}
+        <li>
+          <span class="history-meta">{{ row['created_at'] }}｜{{ situation_labels[row['situation']] }}｜バレ確率 {{ row['risk'] }}%</span>
+          <span class="history-text">{{ row['text'] }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <footer>
+      <p>※ 本アプリの言い訳を使用した結果について、開発者は一切の責任を負いません。</p>
+    </footer>
+  </main>
+</body>
+</html>

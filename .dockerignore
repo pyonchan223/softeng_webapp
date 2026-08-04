@@ -1,0 +1,8 @@
+.git
+.vscode
+data/
+__pycache__/
+*.pyc
+README.md
+LICENSE
+docs/
